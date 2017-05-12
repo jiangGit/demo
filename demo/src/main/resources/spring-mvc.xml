@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                        http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+                        http://www.springframework.org/schema/context
+                        http://www.springframework.org/schema/context/spring-context-3.1.xsd
+                        http://www.springframework.org/schema/mvc
+                        http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+    <!-- 自动扫描该包，使SpringMVC认为包下用了@controller注解的类是控制器 -->
+    <context:component-scan base-package="com.**.web" />
+    <mvc:default-servlet-handler/>
+
+    <!--混合使用多种视图技术 -->
+    <bean
+            class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver"
+            p:order="0"
+            p:ignoreAcceptHeader="true"
+            p:favorPathExtension="true"
+            p:defaultContentType="text/html">
+        <property name="mediaTypes">
+            <map>
+                <entry key="html" value="text/html" />
+                <entry key="json" value="application/json" />
+                <entry key="jsonp" value="application/javascript" />
+            </map>
+        </property>
+        <property name="defaultViews">
+            <list>
+                <bean class="org.springframework.web.servlet.view.json.MappingJacksonJsonView"/>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 默认的试图解析器 -->
+    <bean
+            class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+            p:order="100"
+            p:prefix="/WEB-INF/jsp/"
+            p:suffix=".jsp" />
+
+    <!-- 类型转换器 -->
+    <mvc:annotation-driven conversion-service="conversionService" />
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean"/>
+    <bean id="multipartResolver " class="org.springframework.web.multipart.commons.CommonsMultipartResolver"/>
+
+    <!-- 配置文件上传，如果没有使用文件上传可以不用配置，当然如果不配，那么配置文件中也不必引入上传组件包
+    <bean id="multipartResolver"
+          class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+
+        <property name="defaultEncoding" value="utf-8" />
+
+        <property name="maxUploadSize" value="10485760000" />
+
+        <property name="maxInMemorySize" value="40960" />
+    </bean>
+-->
+</beans>

@@ -1,0 +1,4 @@
+rootProject.name = 'demo3'
+
+include ":demoApi"
+project(":demoApi").projectDir=new File("../demoApi")

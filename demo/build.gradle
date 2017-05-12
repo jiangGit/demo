@@ -51,5 +51,5 @@ dependencies {
     testCompile 'javax:javaee-api:7.0'
    // testCompile group: 'org.eclipse.jetty', name:'jetty-servlet', version:'8.1.5.v20120716'
    // testCompile group: 'org.eclipse.jetty', name:'jetty-server', version:'8.1.5.v20120716'
-    compile files('lib/velocity-1.7.jar')
+    compile files('libs/velocity-1.7.jar')
 }

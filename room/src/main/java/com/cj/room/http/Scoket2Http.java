@@ -97,7 +97,7 @@ public class Scoket2Http {
             String BOUNDARY = "======7d4a6d158c9";
             Socket s = new Socket(host, port);
             OutputStream out = s.getOutputStream();
-            OutputStreamWriter osw = new OutputStreamWriter(out);
+          //  OutputStreamWriter osw = new OutputStreamWriter(out);
             StringBuffer sb = new StringBuffer();
             sb.append("POST "+path+" HTTP/1.1"+newLine);
             sb.append("Host: "+host+":"+port+newLine);
@@ -143,19 +143,23 @@ public class Scoket2Http {
             sb.append("Content-Length: "+(data.toString().getBytes().length + l)+newLine);
             sb.append(newLine);
             sb.append(data.toString());
-            osw.write(sb.toString());
+            //osw.write(sb.toString());
+            out.write(sb.toString().getBytes());
             System.out.println(sb.toString());
-            osw.flush();
+            //osw.flush();
             for (int i = 0 ;i< sbList.size();i++){
-                osw.write(sbList.get(i).toString());
-                osw.flush();
+               // osw.write(sbList.get(i).toString());
+               // osw.flush();
+                out.write(sbList.get(i).toString().getBytes());
                 out.write(bList.get(i));
-                out.flush();
-                osw.write(newLine);
+               // out.flush();
+               // osw.write(newLine);
+                out.write(newLine.getBytes());
             }
-            osw.write(boundaryPrefix+BOUNDARY+"--");
-            osw.flush();
-
+           // osw.write(boundaryPrefix+BOUNDARY+"--");
+           // osw.flush();
+            out.write((boundaryPrefix+BOUNDARY+"--").getBytes());
+            out.flush();
             //--输出服务器传回的消息的头信息
             InputStream is = s.getInputStream();
             String line = IOUtils.toString(is,"utf-8");

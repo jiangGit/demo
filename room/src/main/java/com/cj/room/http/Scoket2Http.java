@@ -94,9 +94,10 @@ public class Scoket2Http {
             final String newLine = "\r\n";
             final String boundaryPrefix = "--";
             // 定义数据分隔线
-            String BOUNDARY = "========7d4a6d158c9";
+            String BOUNDARY = "======7d4a6d158c9";
             Socket s = new Socket(host, port);
-            OutputStreamWriter osw = new OutputStreamWriter(s.getOutputStream());
+            OutputStream out = s.getOutputStream();
+            OutputStreamWriter osw = new OutputStreamWriter(out);
             StringBuffer sb = new StringBuffer();
             sb.append("POST "+path+" HTTP/1.1"+newLine);
             sb.append("Host: "+host+":"+port+newLine);
@@ -104,41 +105,57 @@ public class Scoket2Http {
             sb.append("User-Agent: god view"+newLine);
             sb.append("Content-Type: multipart/form-data; boundary="+ BOUNDARY+newLine);
             StringBuffer data = new StringBuffer();
+
             for (String key:params.keySet()) {
                 List<String> list = params.get(key);
                 for (String val:list) {
                     data.append(boundaryPrefix+BOUNDARY+newLine);
                     data.append("Content-Disposition: form-data; name=\""+key+"\""+newLine);
+                    data.append("Content-Type: text/plain; charset=UTF-8"+newLine);
+                    data.append("Content-Transfer-Encoding: 8bit"+newLine);
                     data.append(newLine);
                     data.append(val+newLine);
                 }
             }
-            System.out.println(data.toString());
+
+            int l = 0;
+            List<StringBuffer> sbList = new ArrayList<>();
+            List<byte[]> bList = new ArrayList<>();
             for (String key:fileMap.keySet()){
-                data.append(boundaryPrefix+BOUNDARY+newLine);
+                StringBuffer data2 = new StringBuffer();
+                data2.append(boundaryPrefix+BOUNDARY+newLine);
                 File file = fileMap.get(key);
-                data.append("Content-Disposition: form-data; name=\""+key+"\"; filename=\""+file.getName()+"\""+newLine);
-                data.append("Content-Type: image/jpeg");
-                data.append(newLine);
-                DataInputStream in = new DataInputStream(new FileInputStream(file));
-                byte[] bufferOut = new byte[1024];
-                String line;
-                // 每次读1KB数据,并且将文件数据写入到输出流中
-                while ((line = in.readLine()) != null) {
-                    System.out.println(line);
-                    data.append(line);
-                }
+                data2.append("Content-Disposition: form-data; name=\""+key+"\"; filename=\""+file.getName()+"\""+newLine);
+                data2.append("Content-Type: application/octet-stream"+newLine);
+                data2.append("Content-Transfer-Encoding: binary"+newLine);
+                data2.append(newLine);
+                byte[] bytes = IOUtils.toByteArray(new FileInputStream(file));
+                l+= bytes.length;
+                l+= data2.toString().getBytes().length;
+                l+= newLine.getBytes().length;
+               sbList.add(data2);
+               bList.add(bytes);
                 // 最后添加换行
-                data.append(newLine);
+                //data2.append(newLine);
 
             }
-            data.append(boundaryPrefix+BOUNDARY+"--");
-
-            sb.append("Content-Length: "+data.length()+newLine);
+            l+=(boundaryPrefix+BOUNDARY+"--").getBytes().length;
+            sb.append("Content-Length: "+(data.toString().getBytes().length + l)+newLine);
             sb.append(newLine);
             sb.append(data.toString());
             osw.write(sb.toString());
+            System.out.println(sb.toString());
             osw.flush();
+            for (int i = 0 ;i< sbList.size();i++){
+                osw.write(sbList.get(i).toString());
+                osw.flush();
+                out.write(bList.get(i));
+                out.flush();
+                osw.write(newLine);
+            }
+            osw.write(boundaryPrefix+BOUNDARY+"--");
+            osw.flush();
+
             //--输出服务器传回的消息的头信息
             InputStream is = s.getInputStream();
             String line = IOUtils.toString(is,"utf-8");
@@ -149,7 +166,7 @@ public class Scoket2Http {
             return  line;
 
         }catch (Exception e){
-
+            e.printStackTrace();
         }
         return null;
     }
@@ -168,10 +185,10 @@ public class Scoket2Http {
         */
         Map<String,List<String>> params = new HashMap<String,List<String>>();
         List<String> list = new ArrayList<>();
-        list.add("12");
+        list.add("6");
         params.put("appType", list);
         Map<String,File> fileMap = new HashMap<>();
-        fileMap.put("uploadResource",new File("C:\\Users\\Public\\Pictures\\c-090001.png"));
+        fileMap.put("uploadResource",new File("C:\\Users\\Public\\Pictures\\Sample Pictures\\game\\g (2).jpg"));
         doPostFile("pjacms.100bt.com",80,"/UploadResourceByAjax.action",params,fileMap);
     }
 

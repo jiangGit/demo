@@ -45,7 +45,7 @@ public class Scoket2Http {
         return  null;
     }
 
-    public static String doPost(String host,int port,String path,Map<String,List<String>> params){
+    public static String doPost(String host,int port,String path,Map<String,String[]> params){
         try {
             final String newLine = "\r\n";
             // 定义数据分隔线
@@ -59,7 +59,7 @@ public class Scoket2Http {
             sb.append("Content-Type: application/x-www-form-urlencoded"+newLine);
             StringBuffer data = new StringBuffer();
             for (String key:params.keySet()) {
-                List<String> list = params.get(key);
+                String[] list = params.get(key);
                 for (String val:list) {
                     if (data.length() > 0){
                         data.append("&");
@@ -89,7 +89,7 @@ public class Scoket2Http {
         return null;
     }
 
-    public static String doPostFile(String host, int port, String path, Map<String,List<String>> params, Map<String,File> fileMap){
+    public static String doPostFile(String host, int port, String path, Map<String,String[]> params, Map<String,File> fileMap){
         try {
             final String newLine = "\r\n";
             final String boundaryPrefix = "--";
@@ -97,7 +97,6 @@ public class Scoket2Http {
             String BOUNDARY = "======7d4a6d158c9";
             Socket s = new Socket(host, port);
             OutputStream out = s.getOutputStream();
-          //  OutputStreamWriter osw = new OutputStreamWriter(out);
             StringBuffer sb = new StringBuffer();
             sb.append("POST "+path+" HTTP/1.1"+newLine);
             sb.append("Host: "+host+":"+port+newLine);
@@ -107,7 +106,7 @@ public class Scoket2Http {
             StringBuffer data = new StringBuffer();
 
             for (String key:params.keySet()) {
-                List<String> list = params.get(key);
+                String[] list = params.get(key);
                 for (String val:list) {
                     data.append(boundaryPrefix+BOUNDARY+newLine);
                     data.append("Content-Disposition: form-data; name=\""+key+"\""+newLine);
@@ -135,29 +134,18 @@ public class Scoket2Http {
                 l+= newLine.getBytes().length;
                sbList.add(data2);
                bList.add(bytes);
-                // 最后添加换行
-                //data2.append(newLine);
-
             }
             l+=(boundaryPrefix+BOUNDARY+"--").getBytes().length;
             sb.append("Content-Length: "+(data.toString().getBytes().length + l)+newLine);
             sb.append(newLine);
             sb.append(data.toString());
-            //osw.write(sb.toString());
             out.write(sb.toString().getBytes());
-            System.out.println(sb.toString());
-            //osw.flush();
             for (int i = 0 ;i< sbList.size();i++){
-               // osw.write(sbList.get(i).toString());
-               // osw.flush();
                 out.write(sbList.get(i).toString().getBytes());
                 out.write(bList.get(i));
-               // out.flush();
-               // osw.write(newLine);
+                // 最后添加换行
                 out.write(newLine.getBytes());
             }
-           // osw.write(boundaryPrefix+BOUNDARY+"--");
-           // osw.flush();
             out.write((boundaryPrefix+BOUNDARY+"--").getBytes());
             out.flush();
             //--输出服务器传回的消息的头信息
@@ -175,6 +163,121 @@ public class Scoket2Http {
         return null;
     }
 
+    public static String doPostFile(Socket socket,String host, int port, String path, Map<String,String[]> params, Map<String,File> fileMap){
+        try {
+            final String newLine = "\r\n";
+            final String boundaryPrefix = "--";
+            // 定义数据分隔线
+            String BOUNDARY = "======7d4a6d158c9";
+            OutputStream out = socket.getOutputStream();
+            StringBuffer sb = new StringBuffer();
+            sb.append("POST "+path+" HTTP/1.1"+newLine);
+            sb.append("Host: "+host+":"+port+newLine);
+            sb.append("Connection: Keep-Alive"+newLine);
+            sb.append("User-Agent: god view"+newLine);
+            sb.append("Content-Type: multipart/form-data; boundary="+ BOUNDARY+newLine);
+            StringBuffer data = new StringBuffer();
+
+            for (String key:params.keySet()) {
+                String[] list = params.get(key);
+                for (String val:list) {
+                    data.append(boundaryPrefix+BOUNDARY+newLine);
+                    data.append("Content-Disposition: form-data; name=\""+key+"\""+newLine);
+                    data.append("Content-Type: text/plain; charset=UTF-8"+newLine);
+                    data.append("Content-Transfer-Encoding: 8bit"+newLine);
+                    data.append(newLine);
+                    data.append(val+newLine);
+                }
+            }
+
+            int l = 0;
+            List<StringBuffer> sbList = new ArrayList<>();
+            List<byte[]> bList = new ArrayList<>();
+            for (String key:fileMap.keySet()){
+                StringBuffer data2 = new StringBuffer();
+                data2.append(boundaryPrefix+BOUNDARY+newLine);
+                File file = fileMap.get(key);
+                data2.append("Content-Disposition: form-data; name=\""+key+"\"; filename=\""+file.getName()+"\""+newLine);
+                data2.append("Content-Type: application/octet-stream"+newLine);
+                data2.append("Content-Transfer-Encoding: binary"+newLine);
+                data2.append(newLine);
+                byte[] bytes = IOUtils.toByteArray(new FileInputStream(file));
+                l+= bytes.length;
+                l+= data2.toString().getBytes().length;
+                l+= newLine.getBytes().length;
+                sbList.add(data2);
+                bList.add(bytes);
+            }
+            l+=(boundaryPrefix+BOUNDARY+"--").getBytes().length;
+            sb.append("Content-Length: "+(data.toString().getBytes().length + l)+newLine);
+            sb.append(newLine);
+            sb.append(data.toString());
+            out.write(sb.toString().getBytes());
+            for (int i = 0 ;i< sbList.size();i++){
+                out.write(sbList.get(i).toString().getBytes());
+                out.write(bList.get(i));
+                // 最后添加换行
+                out.write(newLine.getBytes());
+            }
+            out.write((boundaryPrefix+BOUNDARY+"--").getBytes());
+            out.flush();
+
+           InputStream is = socket.getInputStream();
+            InputStreamReader iReader = new InputStreamReader(is);
+            BufferedReader reader = new BufferedReader(iReader);
+            int rl = 0;
+           while (true){
+               String  line = reader.readLine();
+               System.out.println(line);
+               if (line.contains("Content-Length:")){
+                   rl = Integer.parseInt(line.substring(16));
+               }
+               if (line.contains("Transfer-Encoding: chunked")){
+                   rl = -1;
+               }
+               if (line.isEmpty()){
+                    //读到空行，就是请求头结束了
+                   break;
+               }
+           }
+           if (rl >= 0){
+               char[] chars = new char[rl];
+               reader.read(chars,0,rl);
+               return  new String(chars);
+           }else {
+               int n = 0;
+               sb = new StringBuffer();
+               while ((n=reader.read())>0){
+                   char[] chars = new char[n];
+                   reader.read(chars,0,n);
+
+               }
+
+
+           }
+
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static void doMultPost(String host, int port, String path, Map<String,String[]> params, Map<String,File> fileMap){
+        try {
+            Socket socket = new Socket(host, port);
+            for (int i=0;i<10;i++){
+                System.out.println(i);
+                String line = doPostFile(socket,host,port,path,params,fileMap);
+                System.out.println(line);
+            }
+
+            socket.close();
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
         //doGet("service.100bt.com",80,"/test.jsp");
@@ -187,13 +290,12 @@ public class Scoket2Http {
         params.put("test", list);
         doPost("service.100bt.com",80,"/wx/getAccessToken.json",params);
         */
-        Map<String,List<String>> params = new HashMap<String,List<String>>();
-        List<String> list = new ArrayList<>();
-        list.add("6");
-        params.put("appType", list);
+        Map<String,String[]> params = new HashMap<String,String[]>();
+        params.put("appType", new String[]{"17"});
+        params.put("game", new String[]{"aoqi"});
         Map<String,File> fileMap = new HashMap<>();
-        fileMap.put("uploadResource",new File("C:\\Users\\Public\\Pictures\\Sample Pictures\\game\\g (2).jpg"));
-        doPostFile("pjacms.100bt.com",80,"/UploadResourceByAjax.action",params,fileMap);
+        fileMap.put("picdata",new File("C:\\Users\\Public\\Pictures\\Sample Pictures\\game\\g (2).jpg"));
+        doMultPost("qq.100bt.com",80,"/gameUploadImage.action",params,fileMap);
     }
 
 }

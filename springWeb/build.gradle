@@ -1,0 +1,66 @@
+group 'com.bt.pja'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+
+sourceSets {
+    test.resources.srcDirs = ['src/test/resources','src/test/java']
+    main.resources.srcDirs = ['src/main/resources','src/main/java']
+    main.output.classesDir = file('src/main/WebRoot/WEB-INF/classes')
+    main.output.resourcesDir = file('src/main/WebRoot/WEB-INF/classes')
+}
+ext{
+    springVersion='4.3.1.RELEASE'
+    druidVersion='1.0.19'
+    commonsLang3Version='3.4'
+    mysqlConnectorVersion='5.1.42'
+    junitVersion='4.12'
+    servletVersion='3.1.0'
+    mybatisSpringVersion='1.2.2'
+    mybatisVersion='3.2.8'
+    slf4jVersion='1.7.12'
+    log4jVersion='1.2.17'
+    jacksonVersion='2.7.6'
+    commonsIoVersion='2.5'
+    commonsFileUploadVersion='1.3.1'
+    solrJVersion='6.3.0'
+    aspectJVersion='1.8.9'
+
+}
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+    compile("mysql:mysql-connector-java:$mysqlConnectorVersion")
+    compile("org.apache.commons:commons-lang3:$commonsLang3Version")
+    compile("com.alibaba:druid:$druidVersion")
+    compile("org.springframework:spring-context-support:$springVersion")
+    compile("org.springframework:spring-jdbc:$springVersion")
+    compile("org.springframework:spring-webmvc:$springVersion")
+    compile("org.slf4j:slf4j-api:$slf4jVersion")
+    compile("org.slf4j:slf4j-log4j12:$slf4jVersion")
+    compile("org.slf4j:jcl-over-slf4j:$slf4jVersion")
+    compile("log4j:log4j:$log4jVersion")
+    compile("org.mybatis:mybatis:$mybatisVersion")
+    compile("org.mybatis:mybatis-spring:$mybatisSpringVersion")
+    compile("javax.servlet:javax.servlet-api:$servletVersion")
+    compile("commons-fileupload:commons-fileupload:$commonsFileUploadVersion")
+    compile("commons-io:commons-io:$commonsIoVersion")
+
+    compile("org.aspectj:aspectjrt:$aspectJVersion")
+    compile("org.aspectj:aspectjweaver:$aspectJVersion")
+
+    compile("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+    compile("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
+    compile("com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion")
+
+    testCompile("org.springframework:spring-test:$springVersion")
+    testCompile("junit:junit:$junitVersion")
+
+    compileOnly 'javax:javaee-api:7.0'
+
+}
